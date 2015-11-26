@@ -1,7 +1,9 @@
 package grails.plugins.quartz
 
+import org.quartz.CalendarIntervalTrigger
 import org.quartz.CronScheduleBuilder
 import org.quartz.CronTrigger
+import org.quartz.DailyTimeIntervalTrigger
 import org.quartz.SimpleScheduleBuilder
 import org.quartz.SimpleTrigger
 import org.quartz.Trigger
@@ -44,4 +46,32 @@ class TriggerUtils {
             .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
             .build()
     }
+
+    static boolean triggersEqual(Trigger trigger1, Trigger trigger2) {
+        false
+    }
+
+    static boolean triggersEqual(SimpleTrigger trigger1, SimpleTrigger trigger2) {
+        trigger1 == trigger2 && fieldsEqual(trigger1, trigger2, ["repeatCount", "repeatInterval"])
+    }
+
+    static boolean triggersEqual(CronTrigger trigger1, CronTrigger trigger2) {
+        trigger1 == trigger2 && fieldsEqual(trigger1, trigger2, ["cronExpression", "timeZone"])
+    }
+
+    static boolean triggersEqual(DailyTimeIntervalTrigger trigger1, DailyTimeIntervalTrigger trigger2) {
+        trigger1 == trigger2 && fieldsEqual(trigger1, trigger2,
+                ["repeatCount", "daysOfWeek", "endTimeOfDay", "startTimeOfDay", "repeatInterval", "repeatIntervalUnit"])
+    }
+
+    static boolean triggersEqual(CalendarIntervalTrigger trigger1, CalendarIntervalTrigger trigger2) {
+        trigger1 == trigger2 && fieldsEqual(trigger1, trigger2,
+                ["timeZone", "preserveHourOfDayAcrossDaylightSavings",
+                 "repeatInterval", "repeatIntervalUnit", "skipDayIfHourDoesNotExist"])
+    }
+
+    private static fieldsEqual(obj1, obj2, Collection<String> fields) {
+        [obj1, obj2].collect { obj -> fields.collect { f -> obj."$f" } }.transpose().every { Collection l -> l[0] == l[1] }
+    }
+
 }

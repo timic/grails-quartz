@@ -54,7 +54,7 @@ import org.springframework.util.Assert
  */
 class QuartzGrailsPlugin {
 
-    def version = "1.0.3-SNAPSHOT"
+    def version = "1.0.2.1"
     def grailsVersion = "2.0 > *"
     def author = "Sergey Nebolsin, Graeme Rocher, Ryan Vanderwerf, Vitalii Samolovskikh"
     def authorEmail = "rvanderwerf@gmail.com"
@@ -69,7 +69,7 @@ class QuartzGrailsPlugin {
     def license = "APACHE"
     def issueManagement = [system: "JIRA", url: "http://jira.grails.org/browse/GPQUARTZ"]
     def scm = [url: "http://github.com/grails-plugins/grails-quartz"]
-    def loadAfter = ['core', 'hibernate', 'hibernate4', 'datasources']
+    def loadAfter = ['core', 'hibernate', 'hibernate4', 'datasources', 'databaseMigration']
     def watchedResources = [
             "file:./grails-app/jobs/**/*Job.groovy",
             "file:./plugins/*/grails-app/jobs/**/*Job.groovy"
@@ -295,12 +295,18 @@ class QuartzGrailsPlugin {
             TriggerKey key = trigger.key
             log.debug("Scheduling $fullName with trigger $key: $trigger")
 
-            if (scheduler.getTrigger(key)) {
-                scheduler.rescheduleJob(key, trigger)
+            Trigger existTrigger = scheduler.getTrigger(key)
+            if (existTrigger) {
+                if (!TriggerUtils.triggersEqual(existTrigger, trigger)) {
+                    scheduler.rescheduleJob(key, trigger)
+                    log.debug("Job ${fullName} rescheduled")
+                } else {
+                    log.debug("Job ${fullName} has already scheduled with trigger $trigger . Skip scheduling ...")
+                }
             } else {
                 scheduler.scheduleJob(trigger)
+                log.debug("Job ${fullName} scheduled")
             }
-            log.debug("Job $fullName scheduled")
         }
     }
 
